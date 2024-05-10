@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"github.com/sinlov-go/go-common-lib/pkg/string_tools"
 	"github.com/sinlov-go/go-common-lib/pkg/struct_kit"
+	"github.com/woodpecker-kit/woodpecker-setup-npm/npm_cfg"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_flag"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_info"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_log"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_short_info"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -97,7 +99,7 @@ func (p *Plugin) checkArgs() error {
 		if p.Settings.Username == "" {
 			return fmt.Errorf("missing username, please set %s", CliNameNpmUsername)
 		}
-		if p.Settings.Password == "" {
+		if p.Settings.UserPassword == "" {
 			return fmt.Errorf("missing password, please set %s", CliNameNpmPassword)
 		}
 	} else {
@@ -109,6 +111,14 @@ func (p *Plugin) checkArgs() error {
 		if errParseRegistry != nil {
 			return fmt.Errorf("parse registry, error by [ %s ] err: %v", p.Settings.Registry, errParseRegistry)
 		}
+	}
+
+	if p.Settings.Folder == "" {
+		p.Settings.folderFullPath = p.Settings.RootPath
+		wd_log.Debug("Just use root path as npm config folder")
+	} else {
+		p.Settings.folderFullPath = filepath.Join(p.Settings.RootPath, p.Settings.Folder)
+		wd_log.Debugf("use folder path as npm config folder [ %s ]", p.Settings.folderFullPath)
 	}
 
 	return nil
@@ -140,6 +150,39 @@ func (p *Plugin) doBiz() error {
 		wd_log.Verbosef("dry run, skip some biz code, more info can open debug by flag [ %s ]", wd_flag.EnvKeyPluginDebug)
 		return nil
 	}
+
+	npmRcCfg := npm_cfg.NewNpmRcConfig(
+		npm_cfg.WithDryRun(p.Settings.NpmDryRun),
+		npm_cfg.WithFolderFullPath(p.Settings.folderFullPath),
+		npm_cfg.WithNpmToken(p.Settings.Token),
+		npm_cfg.WithNpmUsername(p.Settings.Username),
+		npm_cfg.WithNpmUserPassword(p.Settings.UserPassword),
+		npm_cfg.WithApiTimeoutSecond(p.Settings.TimeoutSecond),
+	)
+	errCheckFolder := npmRcCfg.CheckFolder()
+	if errCheckFolder != nil {
+		return errCheckFolder
+	}
+
+	if p.Settings.VerdaccioUserTokenSupport {
+		errFetchVerdaccioToken := npmRcCfg.FetchVerdaccioTokenByUserPass(p.Settings.Registry)
+		if errFetchVerdaccioToken != nil {
+			return errFetchVerdaccioToken
+		}
+	}
+
+	writeContent, errWriteNpmRcFile := npmRcCfg.WriteNpmRcFile(p.Settings.Registry, p.Settings.ScopedList)
+	if errWriteNpmRcFile != nil {
+		return errWriteNpmRcFile
+	}
+
+	if p.Settings.NpmDryRun {
+		wd_log.Verbosef("dry run npm, now will write npmrc file content: \n%s", writeContent)
+		wd_log.Verbosef("write npmrc file path: %s", npmRcCfg.GetNpmRcWritePath())
+		return nil
+	}
+
+	wd_log.Verbosef("write npmrc file path: %s", npmRcCfg.GetNpmRcWritePath())
 
 	return nil
 }

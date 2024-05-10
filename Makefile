@@ -13,7 +13,7 @@ ROOT_PARENT_SWITCH_TAG =1.19.13
 # for image local build
 INFO_TEST_BUILD_DOCKER_PARENT_IMAGE =golang
 # for image running
-INFO_BUILD_DOCKER_FROM_IMAGE =node:20.11.1-alpine
+INFO_BUILD_DOCKER_FROM_IMAGE =alpine:3.17
 INFO_BUILD_DOCKER_FILE =Dockerfile
 INFO_TEST_BUILD_DOCKER_FILE =build.dockerfile
 ## MakeDocker.mk settings end

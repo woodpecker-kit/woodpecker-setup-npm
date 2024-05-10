@@ -1,12 +1,16 @@
 package setup_npm_plugin_test
 
 import (
+	"fmt"
+	"github.com/sinlov-go/unittest-kit/unittest_file_kit"
+	"github.com/woodpecker-kit/woodpecker-setup-npm/npm_cfg"
 	"github.com/woodpecker-kit/woodpecker-setup-npm/setup_npm_plugin"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_info"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_log"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_mock"
 	"github.com/woodpecker-kit/woodpecker-tools/wd_short_info"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -25,7 +29,7 @@ func TestCheckArgsPlugin(t *testing.T) {
 	)
 	successArgsSettings := mockPluginSettings()
 	successArgsSettings.Username = "foo"
-	successArgsSettings.Password = "bar"
+	successArgsSettings.UserPassword = "bar"
 
 	// emptySetupMode
 	emptySetupModeWoodpeckerInfo := *wd_mock.NewWoodpeckerInfo(
@@ -105,7 +109,7 @@ func TestPlugin(t *testing.T) {
 	}
 	t.Log("mock Plugin args")
 
-	testDataPathRoot, errTestDataPathRoot := testGoldenKit.GetOrCreateTestDataFullPath("setup_npm_plugin_test")
+	testDataPathRoot, errTestDataPathRoot := testGoldenKit.GetOrCreateTestDataFullPath("setup_npm_plugin")
 	if errTestDataPathRoot != nil {
 		t.Fatal(errTestDataPathRoot)
 	}
@@ -117,32 +121,26 @@ func TestPlugin(t *testing.T) {
 	)
 	statusSuccessSettings := mockPluginSettings()
 
-	// statusFailure
-	statusFailureWoodpeckerInfo := *wd_mock.NewWoodpeckerInfo(
-		wd_mock.FastWorkSpace(filepath.Join(testDataPathRoot, "statusFailure")),
-		wd_mock.FastCurrentStatus(wd_info.BuildStatusFailure),
+	// withScopedList
+	withScopedListWoodpeckerInfo := *wd_mock.NewWoodpeckerInfo(
+		wd_mock.FastWorkSpace(filepath.Join(testDataPathRoot, "withScopedList")),
+		wd_mock.FastCurrentStatus(wd_info.BuildStatusSuccess),
 	)
-	statusFailureSettings := mockPluginSettings()
-
-	// tagPipeline
-	tagPipelineWoodpeckerInfo := *wd_mock.NewWoodpeckerInfo(
-		wd_mock.FastWorkSpace(filepath.Join(testDataPathRoot, "tagPipeline")),
-		wd_mock.FastTag("v1.0.0", "new tag"),
-	)
-	tagPipelineSettings := mockPluginSettings()
-
-	// pullRequestPipeline
-	pullRequestPipelineWoodpeckerInfo := *wd_mock.NewWoodpeckerInfo(
-		wd_mock.FastWorkSpace(filepath.Join(testDataPathRoot, "pullRequestPipeline")),
-		wd_mock.FastPullRequest("1", "new pr", "feature-support", "main", "main"),
-	)
-	pullRequestPipelineSettings := mockPluginSettings()
+	withScopedListSettings := mockPluginSettings()
+	withScopedListSettings.ScopedList = []string{
+		"npm.foo.com",
+		"npm.bar.com",
+		"npm.baz.com",
+	}
 
 	tests := []struct {
 		name           string
 		woodpeckerInfo wd_info.WoodpeckerInfo
 		settings       setup_npm_plugin.Settings
 		workRoot       string
+
+		mockScopedList []string
+		mockVersion    string
 
 		ossTransferKey  string
 		ossTransferData interface{}
@@ -154,24 +152,19 @@ func TestPlugin(t *testing.T) {
 			name:           "statusSuccess",
 			woodpeckerInfo: statusSuccessWoodpeckerInfo,
 			settings:       statusSuccessSettings,
+			mockVersion:    "1.0.0",
+			mockScopedList: []string{
+				"npm.foo.com",
+			},
 		},
 		{
-			name:           "statusFailure",
-			woodpeckerInfo: statusFailureWoodpeckerInfo,
-			settings:       statusFailureSettings,
-			isDryRun:       true,
-		},
-		{
-			name:           "tagPipeline",
-			woodpeckerInfo: tagPipelineWoodpeckerInfo,
-			settings:       tagPipelineSettings,
-			isDryRun:       true,
-		},
-		{
-			name:           "pullRequestPipeline",
-			woodpeckerInfo: pullRequestPipelineWoodpeckerInfo,
-			settings:       pullRequestPipelineSettings,
-			isDryRun:       true,
+			name:           "withScopedList",
+			woodpeckerInfo: withScopedListWoodpeckerInfo,
+			settings:       withScopedListSettings,
+			mockVersion:    "1.0.0",
+			mockScopedList: []string{
+				"npm.foo.com",
+			},
 		},
 	}
 	for _, tc := range tests {
@@ -188,6 +181,12 @@ func TestPlugin(t *testing.T) {
 					t.Fatal(errGenTransferData)
 				}
 			}
+
+			errMockPackageJson := mockPackageJsonFile(p.Settings.RootPath, tc.name, tc.mockVersion, p.Settings.Registry, tc.mockScopedList)
+			if errMockPackageJson != nil {
+				t.Fatal(errMockPackageJson)
+			}
+
 			err := p.Exec()
 			if (err != nil) != tc.wantErr {
 				t.Errorf("FeishuPlugin.Exec() error = %v, wantErr %v", err, tc.wantErr)
@@ -195,4 +194,23 @@ func TestPlugin(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mockPackageJsonFile(root, pkgName, version string, registry string, scopedList []string) error {
+	pkgData := npm_cfg.NpmPackageJson{
+		Name:    strings.ToLower(pkgName),
+		Version: version,
+	}
+
+	if registry != "" && len(scopedList) > 0 {
+		registriesMap := make(map[string]string)
+		for _, scoped := range scopedList {
+			newKey := fmt.Sprintf("@%s/*", scoped)
+			registriesMap[newKey] = registry
+		}
+		pkgData.Registries = registriesMap
+	}
+
+	pkgJsonPath := filepath.Join(root, "package.json")
+	return unittest_file_kit.WriteFileAsJsonBeauty(pkgJsonPath, pkgData, true)
 }

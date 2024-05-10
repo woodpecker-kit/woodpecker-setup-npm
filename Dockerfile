@@ -33,8 +33,8 @@ RUN  cd ${GO_PATH_SOURCE_DIR}/${GO_ENV_PACKAGE_NAME} && \
   -o ${GO_ENV_ROOT_BUILD_BIN_PATH} \
   ${GO_ENV_ROOT_BUILD_ENTRANCE}
 
-# https://hub.docker.com/_/node/tags
-FROM node:20.11.1-alpine
+# https://hub.docker.com/_/alpine
+FROM alpine:3.17
 
 ARG DOCKER_CLI_VERSION=${DOCKER_CLI_VERSION}
 ARG GO_ENV_PACKAGE_NAME=github.com/woodpecker-kit/woodpecker-setup-npm
