@@ -127,7 +127,7 @@ func mockPluginSettings() setup_npm_plugin.Settings {
 	settings.SetupMode = setup_npm_plugin.SetupModeNpmRc
 	settings.Registry = valEnvRegistry
 	settings.Username = valEnvNpmUsername
-	settings.Password = valEnvNpmPassword
+	settings.UserPassword = valEnvNpmPassword
 	settings.Token = valEnvNpmToken
 
 	return settings

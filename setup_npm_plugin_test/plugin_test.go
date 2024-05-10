@@ -25,7 +25,7 @@ func TestCheckArgsPlugin(t *testing.T) {
 	)
 	successArgsSettings := mockPluginSettings()
 	successArgsSettings.Username = "foo"
-	successArgsSettings.Password = "bar"
+	successArgsSettings.UserPassword = "bar"
 
 	// emptySetupMode
 	emptySetupModeWoodpeckerInfo := *wd_mock.NewWoodpeckerInfo(

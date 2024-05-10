@@ -22,12 +22,13 @@ type (
 
 		SetupMode string
 
-		Registry   string
-		Username   string
-		Password   string
-		Token      string
-		ScopedList []string
-		Folder     string
+		Registry       string
+		Username       string
+		UserPassword   string
+		Token          string
+		ScopedList     []string
+		Folder         string
+		folderFullPath string // this will append root path as Folder
 
 		SkipWhoAmI bool
 		NpmDryRun  bool

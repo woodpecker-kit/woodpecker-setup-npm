@@ -53,34 +53,34 @@ func GlobalFlag() []cli.Flag {
 
 		&cli.StringFlag{
 			Name:    CliNameNpmRegistry,
-			Usage:   fmt.Sprintf("NPM registry to use when install packages. if empty will use %s", globalRegistry),
+			Usage:   fmt.Sprintf("NPM registry to use when config packages. if empty will use %s", globalRegistry),
 			EnvVars: []string{EnvNameNpmRegistry},
 		},
 		&cli.StringFlag{
 			Name:    CliNameNpmUsername,
-			Usage:   "NPM username to use when install packages.",
+			Usage:   "NPM username to use when config packages.",
 			EnvVars: []string{EnvNameNpmUsername},
 		},
 		&cli.StringFlag{
 			Name:    CliNameNpmPassword,
-			Usage:   "NPM password to use when install packages.",
+			Usage:   "NPM password to use when config packages.",
 			EnvVars: []string{EnvNameNpmPassword},
 		},
 		&cli.StringFlag{
 			Name:    CliNameNpmToken,
-			Usage:   "NPM token to use when install packages. if token is set, username and password will be ignored.",
+			Usage:   "NPM token to use when config packages. if token is set, username and password will be ignored.",
 			EnvVars: []string{EnvNameNpmToken},
 		},
 
 		&cli.StringFlag{
 			Name:    CliNameNpmFolder,
-			Usage:   "NPM folder to use when publishing packages which must containing package.json. default will use workspace",
+			Usage:   "NPM folder to use when configing packages which must containing package.json. default will use workspace",
 			EnvVars: []string{EnvNameNpmFolder},
 		},
 
 		&cli.StringSliceFlag{
 			Name:    CliNameNpmScopedList,
-			Usage:   "NPM scoped list to use when install packages.",
+			Usage:   "NPM scoped list to use when config packages.",
 			EnvVars: []string{EnvNameNpmScopedList},
 		},
 
@@ -119,12 +119,12 @@ func BindCliFlags(c *cli.Context,
 
 		SetupMode: c.String(CliNameNpmSetupMode),
 
-		Registry:   c.String(CliNameNpmRegistry),
-		Username:   c.String(CliNameNpmUsername),
-		Password:   c.String(CliNameNpmPassword),
-		Token:      c.String(CliNameNpmToken),
-		ScopedList: c.StringSlice(CliNameNpmScopedList),
-		Folder:     c.String(CliNameNpmFolder),
+		Registry:     c.String(CliNameNpmRegistry),
+		Username:     c.String(CliNameNpmUsername),
+		UserPassword: c.String(CliNameNpmPassword),
+		Token:        c.String(CliNameNpmToken),
+		ScopedList:   c.StringSlice(CliNameNpmScopedList),
+		Folder:       c.String(CliNameNpmFolder),
 
 		SkipWhoAmI: c.Bool(CliNameSkipWhoAmi),
 		NpmDryRun:  c.Bool(CLiNameNpmDryRun),
