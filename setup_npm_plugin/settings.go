@@ -30,8 +30,9 @@ type (
 		Folder         string
 		folderFullPath string // this will append root path as Folder
 
-		SkipWhoAmI bool
-		NpmDryRun  bool
+		VerdaccioUserTokenSupport bool
+
+		NpmDryRun bool
 	}
 )
 

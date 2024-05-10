@@ -34,8 +34,8 @@ var (
 	// mustSetInCiEnvList
 	//  for check set in CI env not empty
 	mustSetInCiEnvList = []string{
-		wd_flag.EnvKeyCiSystemPlatform,
-		wd_flag.EnvKeyCiSystemVersion,
+		//wd_flag.EnvKeyCiSystemPlatform,
+		//wd_flag.EnvKeyCiSystemVersion,
 	}
 
 	// mustSetArgsAsEnvList
@@ -46,10 +46,12 @@ var (
 	valEnvTimeoutSecond uint
 	valEnvPluginDebug   = false
 
-	valEnvRegistry    = ""
-	valEnvNpmUsername = ""
-	valEnvNpmPassword = ""
-	valEnvNpmToken    = ""
+	valEnvNameNpmDryRun                 = false
+	valEnvRegistry                      = ""
+	valEnvNpmUsername                   = ""
+	valEnvNpmPassword                   = ""
+	valEnvNpmToken                      = ""
+	valEnvNameVerdaccioUserTokenSupport = false
 )
 
 func init() {
@@ -62,11 +64,13 @@ func init() {
 
 	valEnvTimeoutSecond = uint(env_kit.FetchOsEnvInt(wd_flag.EnvKeyPluginTimeoutSecond, 10))
 
+	valEnvNameNpmDryRun = env_kit.FetchOsEnvBool(setup_npm_plugin.EnvNameNpmDryRun, false)
 	valEnvPluginDebug = env_kit.FetchOsEnvBool(wd_flag.EnvKeyPluginDebug, false)
 	valEnvRegistry = env_kit.FetchOsEnvStr(setup_npm_plugin.EnvNameNpmRegistry, "")
 	valEnvNpmUsername = env_kit.FetchOsEnvStr(setup_npm_plugin.EnvNameNpmUsername, "")
 	valEnvNpmPassword = env_kit.FetchOsEnvStr(setup_npm_plugin.EnvNameNpmPassword, "")
 	valEnvNpmToken = env_kit.FetchOsEnvStr(setup_npm_plugin.EnvNameNpmToken, "")
+	valEnvNameVerdaccioUserTokenSupport = env_kit.FetchOsEnvBool(setup_npm_plugin.EnvNameVerdaccioUserTokenSupport, false)
 }
 
 // test case basic tools start
@@ -129,6 +133,9 @@ func mockPluginSettings() setup_npm_plugin.Settings {
 	settings.Username = valEnvNpmUsername
 	settings.UserPassword = valEnvNpmPassword
 	settings.Token = valEnvNpmToken
+
+	settings.VerdaccioUserTokenSupport = valEnvNameVerdaccioUserTokenSupport
+	settings.NpmDryRun = valEnvNameNpmDryRun
 
 	return settings
 

@@ -1,6 +1,6 @@
 ---
 name: woodpecker-setup-npm
-description: "woodpecker setup npm kits, add .npmrc or other npm config file at node dir"
+description: "woodpecker setup npm kits, add .npmrc or other npm config file at package.json dir"
 author: woodpecker-kit
 tags: [ node, npm ]
 containerImage: sinlov/woodpecker-setup-npm
@@ -9,7 +9,19 @@ url: https://github.com/woodpecker-kit/woodpecker-setup-npm
 icon: https://raw.githubusercontent.com/woodpecker-kit/woodpecker-setup-npm/main/doc/logo.png
 ---
 
-woodpecker plugin template
+# woodpecker-setup-npm
+
+woodpecker setup npm kits, add .npmrc or other npm config file at package.json dir
+
+## Features
+
+- [x] flag `npm-registry` to set custom npm registry, and support npm whoami check
+- [x] args `npm-folder` to publish, which must containing `package.json`, generate `.npmrc` file will be here
+- [x] support `npm-token` or `npm-username` and `npm-password` to config `.npmrc` file
+  - [x] open `verdaccio-user-token-support` will use `npm-username` and `npm-password` to get token
+- [x] support write `.npmrc` file at project folder with `package.json`
+  - [x] auto generate `package.json` file `registries` setting `scope` at `.npmrc`
+  - [x] also support `npm-scoped-list` to define scoped
 
 ## Settings
 

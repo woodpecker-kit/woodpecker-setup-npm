@@ -152,20 +152,37 @@ func (p *Plugin) doBiz() error {
 	}
 
 	npmRcCfg := npm_cfg.NewNpmRcConfig(
+		npm_cfg.WithDryRun(p.Settings.NpmDryRun),
 		npm_cfg.WithFolderFullPath(p.Settings.folderFullPath),
 		npm_cfg.WithNpmToken(p.Settings.Token),
 		npm_cfg.WithNpmUsername(p.Settings.Username),
 		npm_cfg.WithNpmUserPassword(p.Settings.UserPassword),
+		npm_cfg.WithApiTimeoutSecond(p.Settings.TimeoutSecond),
 	)
 	errCheckFolder := npmRcCfg.CheckFolder()
 	if errCheckFolder != nil {
 		return errCheckFolder
 	}
 
-	errWriteNpmRcFile := npmRcCfg.WriteNpmRcFile(p.Settings.Registry, p.Settings.ScopedList)
+	if p.Settings.VerdaccioUserTokenSupport {
+		errFetchVerdaccioToken := npmRcCfg.FetchVerdaccioTokenByUserPass(p.Settings.Registry)
+		if errFetchVerdaccioToken != nil {
+			return errFetchVerdaccioToken
+		}
+	}
+
+	writeContent, errWriteNpmRcFile := npmRcCfg.WriteNpmRcFile(p.Settings.Registry, p.Settings.ScopedList)
 	if errWriteNpmRcFile != nil {
 		return errWriteNpmRcFile
 	}
+
+	if p.Settings.NpmDryRun {
+		wd_log.Verbosef("dry run npm, now will write npmrc file content: \n%s", writeContent)
+		wd_log.Verbosef("write npmrc file path: %s", npmRcCfg.GetNpmRcWritePath())
+		return nil
+	}
+
+	wd_log.Verbosef("write npmrc file path: %s", npmRcCfg.GetNpmRcWritePath())
 
 	return nil
 }

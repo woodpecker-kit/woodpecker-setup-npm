@@ -1,7 +1,13 @@
 package npm_cfg
 
+const (
+	minimumApiTimeoutSecond = 10
+)
+
 type NpmRcConfig struct {
 	NpmRcConfigInterface NpmRcConfigInterface `json:"-"`
+
+	dryRun bool
 
 	folderFullPath string
 
@@ -11,15 +17,22 @@ type NpmRcConfig struct {
 
 	npmRcUserHomeEnable bool
 
-	npmPkg       *NpmPackageJson
-	mockUserHome string
-	nowRegistry  string
+	apiTimeoutSecond uint
+
+	npmPkg         *NpmPackageJson
+	mockUserHome   string
+	nowRegistry    string
+	writeNpmRcPath string
 }
 
 type NpmRcConfigInterface interface {
 	CheckFolder() error
 
-	WriteNpmRcFile(registry string, scopedList []string) error
+	FetchVerdaccioTokenByUserPass(verdaccioUrl string) error
+
+	WriteNpmRcFile(registry string, scopedList []string) (string, error)
+
+	GetNpmRcWritePath() string
 }
 
 // NewNpmRcConfig
@@ -44,10 +57,18 @@ var (
 )
 
 func setDefaultOptionNpmRcConfig() *NpmRcConfig {
-	return &NpmRcConfig{}
+	return &NpmRcConfig{
+		apiTimeoutSecond: minimumApiTimeoutSecond,
+	}
 }
 
 type NpmRcConfigOption func(*NpmRcConfig)
+
+func WithDryRun(dryRun bool) NpmRcConfigOption {
+	return func(o *NpmRcConfig) {
+		o.dryRun = dryRun
+	}
+}
 
 func WithFolderFullPath(folderFullPath string) NpmRcConfigOption {
 	return func(o *NpmRcConfig) {
@@ -70,6 +91,14 @@ func WithNpmUsername(npmUsername string) NpmRcConfigOption {
 func WithNpmUserPassword(npmUserPassword string) NpmRcConfigOption {
 	return func(o *NpmRcConfig) {
 		o.npmUserPassword = npmUserPassword
+	}
+}
+
+func WithApiTimeoutSecond(apiTimeoutSecond uint) NpmRcConfigOption {
+	return func(o *NpmRcConfig) {
+		if apiTimeoutSecond > minimumApiTimeoutSecond {
+			o.apiTimeoutSecond = apiTimeoutSecond
+		}
 	}
 }
 

@@ -29,14 +29,14 @@ const (
 	CliNameNpmScopedList = "settings.npm-scoped-list"
 	EnvNameNpmScopedList = "PLUGIN_NPM_SCOPED_LIST"
 
-	CliNameSkipWhoAmi = "settings.npm-skip-whoami"
-	EnvNameSkipWhoAmi = "PLUGIN_SKIP_WHOAMI"
-
 	CliNameNpmFolder = "settings.npm-folder"
 	EnvNameNpmFolder = "PLUGIN_NPM_FOLDER"
 
 	CLiNameNpmDryRun = "settings.npm-dry-run"
 	EnvNameNpmDryRun = "PLUGIN_NPM_DRY_RUN"
+
+	CliNameVerdaccioUserTokenSupport = "settings.verdaccio-user-token-support"
+	EnvNameVerdaccioUserTokenSupport = "PLUGIN_VERDACCIO_USER_TOKEN_SUPPORT"
 )
 
 // GlobalFlag
@@ -85,9 +85,9 @@ func GlobalFlag() []cli.Flag {
 		},
 
 		&cli.BoolFlag{
-			Name:    CliNameSkipWhoAmi,
-			Usage:   "Skip npm whoami check",
-			EnvVars: []string{EnvNameSkipWhoAmi},
+			Name:    CliNameVerdaccioUserTokenSupport,
+			Usage:   "verdaccio support username and password to get token",
+			EnvVars: []string{EnvNameVerdaccioUserTokenSupport},
 		},
 
 		&cli.BoolFlag{
@@ -126,8 +126,9 @@ func BindCliFlags(c *cli.Context,
 		ScopedList:   c.StringSlice(CliNameNpmScopedList),
 		Folder:       c.String(CliNameNpmFolder),
 
-		SkipWhoAmI: c.Bool(CliNameSkipWhoAmi),
-		NpmDryRun:  c.Bool(CLiNameNpmDryRun),
+		VerdaccioUserTokenSupport: c.Bool(CliNameVerdaccioUserTokenSupport),
+
+		NpmDryRun: c.Bool(CLiNameNpmDryRun),
 	}
 
 	wd_log.Debugf("args %s: %v", wd_flag.NameCliPluginTimeoutSecond, config.TimeoutSecond)

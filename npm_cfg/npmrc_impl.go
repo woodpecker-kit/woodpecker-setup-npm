@@ -1,11 +1,14 @@
 package npm_cfg
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/user"
@@ -13,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 )
 
 func (n *NpmRcConfig) CheckFolder() error {
@@ -67,11 +71,66 @@ func readPackageFile(folder string) (*NpmPackageJson, error) {
 	return &npm, nil
 }
 
+func (n *NpmRcConfig) FetchVerdaccioTokenByUserPass(verdaccioUrl string) error {
+	if verdaccioUrl == "" {
+		return fmt.Errorf("verdaccio url is empty")
+	}
+	verdaccioUrl = strings.TrimRight(verdaccioUrl, "/")
+
+	if n.npmUsername == "" {
+		return fmt.Errorf("verdaccio username is empty")
+	}
+
+	if n.npmUserPassword == "" {
+		return fmt.Errorf("verdaccio password is empty")
+	}
+
+	url := fmt.Sprintf("%s/-/verdaccio/sec/login", verdaccioUrl)
+
+	loginReq := VerdaccioLoginRequest{
+		Name:     n.npmUsername,
+		Password: n.npmUserPassword,
+	}
+	jsonReq, err := json.Marshal(loginReq)
+	if err != nil {
+		return fmt.Errorf("verdaccio error preparing request: %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonReq))
+	if err != nil {
+		return fmt.Errorf("verdaccio error on request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: time.Duration(n.apiTimeoutSecond) * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("verdaccio error on response: %v\n", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	var loginResp VerdaccioLoginResponse
+	err = json.Unmarshal(body, &loginResp)
+	if err != nil {
+		return fmt.Errorf("verdaccio error decoding response: %v", err)
+	}
+
+	n.npmToken = loginResp.Token
+
+	return nil
+}
+
+func (n *NpmRcConfig) GetNpmRcWritePath() string {
+	return n.writeNpmRcPath
+}
+
 // WriteNpmRcFile
 // if registry is empty, use default NpmJsRegistry
-func (n *NpmRcConfig) WriteNpmRcFile(registry string, scopedList []string) error {
+func (n *NpmRcConfig) WriteNpmRcFile(registry string, scopedList []string) (string, error) {
 	if n.npmPkg == nil {
-		return fmt.Errorf("please use CheckFolder to check package.json first")
+		return "", fmt.Errorf("please use CheckFolder to check package.json first")
 	}
 
 	if registry == "" {
@@ -101,6 +160,7 @@ func (n *NpmRcConfig) WriteNpmRcFile(registry string, scopedList []string) error
 		}
 		npmrcPath = path.Join(home, NpmRcFileName)
 	}
+	n.writeNpmRcPath = npmrcPath
 
 	authContents := authContentFunc(n)
 
@@ -109,7 +169,12 @@ func (n *NpmRcConfig) WriteNpmRcFile(registry string, scopedList []string) error
 		authContents += "\n" + strings.Join(scopedContentList, "\n")
 	}
 
-	return os.WriteFile(npmrcPath, []byte(authContents), 0644)
+	if n.dryRun {
+
+		return authContents, nil
+	}
+
+	return authContents, os.WriteFile(npmrcPath, []byte(authContents), 0644)
 }
 
 const regPackageJsonRegistries = `^(@)([\w\.\-].*)(\/)(.*)$`
