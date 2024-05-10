@@ -1,0 +1,28 @@
+{
+  "name": "woodpecker-setup-npm",
+  "version": "1.0.0",
+  "description": "woodpecker setup npm kits, add .npmrc or other npm config file at node dir",
+  "directories": {
+    "doc": "doc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woodpecker-kit/woodpecker-setup-npm.git"
+  },
+  "keywords": [
+    "go",
+    "npm",
+    "docker",
+    "woodpecker"
+  ],
+  "author": {
+    "name": "sinlov",
+    "email": "sinlovgmppt@gmail.com",
+    "url": "https://github.com/woodpecker-kit/woodpecker-setup-npm"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/woodpecker-kit/woodpecker-setup-npm/issues"
+  },
+  "homepage": "https://github.com/woodpecker-kit/woodpecker-setup-npm#readme"
+}
