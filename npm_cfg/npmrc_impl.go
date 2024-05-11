@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -108,13 +109,25 @@ func (n *NpmRcConfig) FetchVerdaccioTokenByUserPass(verdaccioUrl string) error {
 	if err != nil {
 		return fmt.Errorf("verdaccio error on response: %v\n", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		errClose := Body.Close()
+		if errClose != nil {
+			log.Fatalf("http response body close error: %v", errClose)
+		}
+	}(resp.Body)
 
-	body, _ := io.ReadAll(resp.Body)
+	body, errBody := io.ReadAll(resp.Body)
+	if errBody != nil {
+		return fmt.Errorf("verdaccio error reading response: %v", errBody)
+	}
 	var loginResp VerdaccioLoginResponse
 	err = json.Unmarshal(body, &loginResp)
 	if err != nil {
 		return fmt.Errorf("verdaccio error decoding response: %v", err)
+	}
+
+	if loginResp.VerdaccioResponse.ErrorMsg != "" {
+		return fmt.Errorf("verdaccio error: %s", loginResp.VerdaccioResponse.ErrorMsg)
 	}
 
 	n.npmToken = loginResp.Token
