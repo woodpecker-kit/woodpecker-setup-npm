@@ -156,5 +156,6 @@ func mockPluginWithSettings(t *testing.T, woodpeckerInfo wd_info.WoodpeckerInfo,
 	}
 
 	p.Settings = settings
+
 	return p
 }

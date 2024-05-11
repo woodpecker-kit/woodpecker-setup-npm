@@ -183,8 +183,10 @@ func (n *NpmRcConfig) WriteNpmRcFile(registry string, scopedList []string) (stri
 	}
 
 	if n.dryRun {
-
-		return authContents, nil
+		if len(scopedContentList) > 0 {
+			return strings.Join(scopedContentList, "\n"), nil
+		}
+		return "", nil
 	}
 
 	return authContents, os.WriteFile(npmrcPath, []byte(authContents), 0644)

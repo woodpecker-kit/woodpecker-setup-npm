@@ -159,18 +159,22 @@ func (p *Plugin) doBiz() error {
 		npm_cfg.WithNpmUserPassword(p.Settings.UserPassword),
 		npm_cfg.WithApiTimeoutSecond(p.Settings.TimeoutSecond),
 	)
+
+	wd_log.Debugf("start check folder and write npmrc file")
 	errCheckFolder := npmRcCfg.CheckFolder()
 	if errCheckFolder != nil {
 		return errCheckFolder
 	}
 
 	if p.Settings.VerdaccioUserTokenSupport {
+		wd_log.Debugf("start fetch verdaccio token by user pass")
 		errFetchVerdaccioToken := npmRcCfg.FetchVerdaccioTokenByUserPass(p.Settings.Registry)
 		if errFetchVerdaccioToken != nil {
 			return errFetchVerdaccioToken
 		}
 	}
 
+	wd_log.Debugf("start write npmrc file")
 	writeContent, errWriteNpmRcFile := npmRcCfg.WriteNpmRcFile(p.Settings.Registry, p.Settings.ScopedList)
 	if errWriteNpmRcFile != nil {
 		return errWriteNpmRcFile
