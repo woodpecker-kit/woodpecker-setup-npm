@@ -18,20 +18,24 @@ woodpecker setup npm kits, add .npmrc or other npm config file at package.json d
 - [x] flag `npm-registry` to set custom npm registry, and support npm whoami check
 - [x] args `npm-folder` to publish, which must containing `package.json`, generate `.npmrc` file will be here
 - [x] support `npm-token` or `npm-username` and `npm-password` to config `.npmrc` file
-  - [x] open `verdaccio-user-token-support` will use `npm-username` and `npm-password` to get token
+    - [x] open `verdaccio-user-token-support` will use `npm-username` and `npm-password` to get token
 - [x] support write `.npmrc` file at project folder with `package.json`
-  - [x] auto generate `package.json` file `registries` setting `scope` at `.npmrc`
-  - [x] also support `npm-scoped-list` to define scoped
+    - [x] auto generate `package.json` file `registries` setting `scope` at `.npmrc`
+    - [x] also support `npm-scoped-list` to define scoped
 
 ## Settings
 
-| Name                           | Required | Default value | Description                                        |
-|--------------------------------|----------|---------------|----------------------------------------------------|
-| `debug`                        | **no**   | *false*       | open debug log or open by env `PLUGIN_DEBUG`       |
-| `not-empty-envs`               | **no**   | *none*        | use this args, will check env not empty            |
-| `env-printer-print-keys`       | **no**   | *none*        | use this args, will print env by keys              |
-| `env-printer-padding-left-max` | **no**   | *32*          | set env printer padding left max count, minimum 24 |
-| `steps-transfer-demo`          | **no**   | *false*       | use this args, will print steps transfer demo      |
+| Name                           | Required | Default value | Description                                                                                        |
+|--------------------------------|----------|---------------|----------------------------------------------------------------------------------------------------|
+| `debug`                        | **no**   | *false*       | open debug log or open by env `PLUGIN_DEBUG`                                                       |
+| `npm-registry`                 | **no**   | *none*        | NPM registry settings if empty will use https://registry.npmjs.org/                                |
+| `npm-token`                    | **yes**  | *none*        | NPM token to use when publishing packages. if token is set, username and password will be ignored. |
+| `npm-username`                 | **yes**  | *none*        | NPM username                                                                                       |
+| `npm-password`                 | **yes**  | *none*        | NPM password                                                                                       |
+| `verdaccio-user-token-support` | **no**   | *false*       | use username and password to get token, only for https://verdaccio.org/                            |
+| `npm-folder`                   | **no**   | *none*        | folder containing package.json, empty will use workspace                                           |
+| `npm-dry-run`                  | **no**   | *false*       | dry run mode, will add NPM registry config but will print the command only                         |
+| `npm-scoped-list`              | **no**   | *none*        | auto generate `package.json` node `registries` not finding can add this to append                  |
 
 **Hide Settings:**
 
@@ -45,6 +49,10 @@ woodpecker setup npm kits, add .npmrc or other npm config file at package.json d
 
 - workflow with backend `docker`
 
+[![docker hub version semver](https://img.shields.io/docker/v/sinlov/woodpecker-setup-npm?sort=semver)](https://hub.docker.com/r/sinlov/woodpecker-setup-npm/tags?page=1&ordering=last_updated)
+[![docker hub image size](https://img.shields.io/docker/image-size/sinlov/woodpecker-setup-npm)](https://hub.docker.com/r/sinlov/woodpecker-setup-npm)
+[![docker hub image pulls](https://img.shields.io/docker/pulls/sinlov/woodpecker-setup-npm)](https://hub.docker.com/r/sinlov/woodpecker-setup-npm/tags?page=1&ordering=last_updated)
+
 ```yml
 labels:
   backend: docker
@@ -54,16 +62,17 @@ steps:
     pull: false
     settings:
       # debug: true
-      # not-empty-envs: # check env not empty v1.7.+ support
-      #   - WOODPECKER_AGENT_USER_HOME
-      env-printer-print-keys: # print env keys
-        - GOPATH
-        - GOPRIVATE
-        - GOBIN
-        # env-printer-padding-left-max: # padding left max
-        ## https://woodpecker-ci.org/docs/usage/secrets
-        # from_secret: secret_printer_padding_left_max
-      steps-transfer-demo: false # open this show steps transfer demo
+      ## registry settings if empty will use https://registry.npmjs.org/
+      # npm-registry: https://verdaccio.foo.com
+      # npm-token: # NPM token if token is set, username and password will be ignored
+      #   from_secret: npm_setup_token
+      npm-username: # NPM username
+        from_secret: npm_setup_username
+      npm-password: # NPM password
+        from_secret: npm_setup_password
+      verdaccio-user-token-support: true # use username and password to get token only for https://verdaccio.org/
+      ## folder containing package.json, empty will use workspace
+      npm-folder: .
 ```
 
 - workflow with backend `local`, must install at local and effective at evn `PATH`
@@ -73,6 +82,9 @@ steps:
 ```bash
 go install -a github.com/woodpecker-kit/woodpecker-setup-npm/cmd/woodpecker-setup-npm@latest
 ```
+
+[![GitHub latest SemVer tag)](https://img.shields.io/github/v/tag/woodpecker-kit/woodpecker-setup-npm)](https://github.com/woodpecker-kit/woodpecker-setup-npm/tags)
+[![GitHub release)](https://img.shields.io/github/v/release/woodpecker-kit/woodpecker-setup-npm)](https://github.com/woodpecker-kit/woodpecker-setup-npm/releases)
 
 - install at ${GOPATH}/bin, v1.0.0
 
@@ -88,20 +100,69 @@ steps:
     image: woodpecker-setup-npm
     settings:
       # debug: true
-      # not-empty-envs: # check env not empty v1.7.+ support
-      #   - WOODPECKER_AGENT_USER_HOME
-      env-printer-print-keys: # print env keys
-        - GOPATH
-        - GOPRIVATE
-        - GOBIN
-      env-printer-padding-left-max: 36 # padding left max
-      steps-transfer-demo: false # open this show steps transfer demo
+      ## registry settings if empty will use https://registry.npmjs.org/
+      # npm-registry: https://verdaccio.foo.com
+      # npm-token: # NPM token if token is set, username and password will be ignored
+      #   from_secret: npm_setup_token
+      npm-username: # NPM username
+        from_secret: npm_setup_username
+      npm-password: # NPM password
+        from_secret: npm_setup_password
+      verdaccio-user-token-support: true # use username and password to get token
+      ## folder containing package.json, empty will use workspace
+      npm-folder: .
+```
+
+- full config
+
+```yml
+labels:
+  backend: docker
+steps:
+  woodpecker-setup-npm:
+    image: sinlov/woodpecker-setup-npm:latest
+    pull: false
+    settings:
+      # debug: true
+      ## registry settings if empty will use https://registry.npmjs.org/
+      # npm-registry: https://verdaccio.foo.com
+      npm-token: # NPM token if token is set, username and password will be ignored
+        from_secret: npm_setup_token
+      npm-username: # NPM username
+        from_secret: npm_setup_username
+      npm-password: # NPM password
+        from_secret: npm_setup_password
+      verdaccio-user-token-support: true # use username and password to get token only for https://verdaccio.org/
+      npm-dry-run: true # dry run mode, will add NPM registry config but will print the command only
+      ## folder containing package.json, empty will use workspace
+      npm-folder: .
+      npm-scoped-list: # auto generate `package.json` node `registries` not finding can add this to append
+        - "verdaccio.foo.com" # scoped "@verdaccio.foo.com/*": "https://verdaccio.foo.com"
+        - "pkg.bar" # scoped "@pkg.bar*": "https://verdaccio.foo.com"
 ```
 
 ## Notes
 
-- Please add notes
+- use scoped list to auto generate `package.json` node `registries` which `package.json` can like this
+
+```json
+{
+  "name": "foo",
+  "version": "1.0.0",
+  "registries": {
+    "@verdaccio.foo.com/*": "https://verdaccio.foo.com",
+    "@pkg.bar*": "https://verdaccio.foo.com"
+  }
+}
+```
+then generate `.npmrc` file like this
+
+```ini
+//verdaccio.foo.com/:_authToken={YOUR_TOKEN}
+@verdaccio.foo.com:registry=https://verdaccio.foo.com
+@pkg.bar:registry=https://verdaccio.foo.com
+```
 
 ## Known limitations
 
-- Please add a known issue
+- `verdaccio-user-token-support` only test for [verdaccio Version: 5.x](https://verdaccio.org/)
